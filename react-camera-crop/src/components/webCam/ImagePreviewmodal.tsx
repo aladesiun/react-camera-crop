@@ -61,7 +61,7 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
         // Initialize crop area when entering crop mode
         // For mobile, always use the small screen ref
         const currentRef = imageRef.current;
-
+    
         if (currentRef) {
             // Wait for image to be loaded
             if (currentRef.complete && currentRef.naturalWidth > 0) {
@@ -71,8 +71,19 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
                 const defaultHeight = rect.height * 0.6;
                 const defaultX = (rect.width - defaultWidth) / 2;
                 const defaultY = (rect.height - defaultHeight) / 2;
-
-                setCrop({
+    
+                const newCrop = {
+                    unit: 'px' as const,
+                    x: defaultX,
+                    y: defaultY,
+                    width: defaultWidth,
+                    height: defaultHeight
+                };
+    
+                setCrop(newCrop);
+                
+                // Also set completedCrop immediately so save works without moving
+                setCompletedCrop({
                     unit: 'px',
                     x: defaultX,
                     y: defaultY,
@@ -81,7 +92,18 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
                 });
             } else {
                 // If image not loaded, set a default crop and update when loaded
-                setCrop({
+                const newCrop = {
+                    unit: 'px' as const,
+                    x: 20,
+                    y: 20,
+                    width: 200,
+                    height: 150
+                };
+                
+                setCrop(newCrop);
+                
+                // Also set completedCrop
+                setCompletedCrop({
                     unit: 'px',
                     x: 20,
                     y: 20,
@@ -211,6 +233,8 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
 
         // Use completedCrop if available, otherwise use current crop state
         let cropToUse: PixelCrop;
+        console.log(crop,completedCrop, );
+        
 
         if (completedCrop) {
             cropToUse = completedCrop;
