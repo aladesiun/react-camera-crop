@@ -519,22 +519,27 @@ const processCroppedImage = (cropData: PixelCrop) => {
         Math.abs(cropData.x - defaultX) / defaultWidth < tolerance &&
         Math.abs(cropData.y - defaultY) / defaultHeight < tolerance;
 
+    // Check if screen width is 500px or below
+    const isSmallScreen = window.innerWidth <= 500;
+
     console.log('PROCESS CROP - Crop analysis:', {
         currentCrop: cropData,
         defaultCrop: { x: defaultX, y: defaultY, width: defaultWidth, height: defaultHeight },
-        isDefaultCrop: isDefaultCrop
+        isDefaultCrop: isDefaultCrop,
+        isSmallScreen: isSmallScreen,
+        screenWidth: window.innerWidth
     });
 
-    // Apply Y-axis reduction only if user hasn't interacted with default crop
+    // Apply Y-axis reduction only if user hasn't interacted with default crop AND screen is small
     const scaleX = baseScaleX;
     const scaleY = baseScaleY; // Always use full scale for coordinate conversion
     
-    // For default crops, we'll reduce the height by cropping from top and bottom equally
+    // For default crops on small screens, we'll reduce the height by cropping from top and bottom equally
     let finalCropData = cropData;
-    if (isDefaultCrop) {
-        // Calculate how much to reduce from top and bottom (20% each = 40% total reduction)
-        const heightReduction = cropData.height * 0.4; // 40% total reduction
-        const topBottomReduction = heightReduction / 2; // 20% from top, 20% from bottom
+    if (isDefaultCrop && isSmallScreen) {
+        // Calculate how much to reduce from top and bottom (25% each = 50% total reduction)
+        const heightReduction = cropData.height * 0.5; // 50% total reduction
+        const topBottomReduction = heightReduction / 2; // 25% from top, 25% from bottom
         
         finalCropData = {
             ...cropData,
@@ -542,11 +547,12 @@ const processCroppedImage = (cropData: PixelCrop) => {
             height: cropData.height - heightReduction // Reduce total height
         };
         
-        console.log('PROCESS CROP - Applied top/bottom height reduction:', {
+        console.log('PROCESS CROP - Applied top/bottom height reduction (50% for small screen):', {
             originalCrop: cropData,
             finalCrop: finalCropData,
             heightReduction: heightReduction,
-            topBottomReduction: topBottomReduction
+            topBottomReduction: topBottomReduction,
+            screenWidth: window.innerWidth
         });
     }
 
@@ -554,7 +560,8 @@ const processCroppedImage = (cropData: PixelCrop) => {
         scaleX, 
         scaleY, 
         isDefaultCrop: isDefaultCrop,
-        heightReduction: isDefaultCrop ? '40% reduction from top/bottom' : 'no reduction (user modified crop)'
+        isSmallScreen: isSmallScreen,
+        heightReduction: (isDefaultCrop && isSmallScreen) ? '50% reduction from top/bottom (small screen)' : 'no reduction (user modified crop or large screen)'
     });
 
     // Convert display coordinates to natural image coordinates
