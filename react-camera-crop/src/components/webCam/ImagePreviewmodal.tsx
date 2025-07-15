@@ -172,9 +172,15 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
         const cropWidth = cropToUse.width * scaleX;
         const cropHeight = cropToUse.height * scaleY;
 
-        // Set canvas size to the actual crop dimensions
+        // Force Y dimension to 500px, centered on the original crop
+        const targetYHeight = 500;
+        const originalCropCenterY = cropY + (cropHeight / 2);
+        const newCropY = originalCropCenterY - (targetYHeight / 2);
+        const newCropHeight = targetYHeight;
+
+        // Set canvas size to the forced Y dimension
         canvas.width = cropWidth;
-        canvas.height = cropHeight;
+        canvas.height = newCropHeight;
 
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
@@ -268,18 +274,24 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
         const cropWidth = cropToUse.width * scaleX;
         const cropHeight = cropToUse.height * scaleY;
 
-        // Set canvas size to the actual crop dimensions
+        // Force Y dimension to 500px, centered on the original crop
+        const targetYHeight = 500;
+        const originalCropCenterY = cropY + (cropHeight / 2);
+        const newCropY = originalCropCenterY - (targetYHeight / 2);
+        const newCropHeight = targetYHeight;
+
+        // Set canvas size to the forced Y dimension
         canvas.width = cropWidth;
-        canvas.height = cropHeight;
+        canvas.height = newCropHeight;
 
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
 
-        // Draw the cropped portion from the natural image
+        // Draw the cropped portion from the natural image with forced Y dimension
         ctx.drawImage(
             img,
-            cropX, cropY, cropWidth, cropHeight,  // Source rectangle (from natural image)
-            0, 0, cropWidth, cropHeight            // Destination rectangle (to canvas)
+            cropX, newCropY, cropWidth, newCropHeight,  // Source rectangle (from natural image)
+            0, 0, cropWidth, newCropHeight              // Destination rectangle (to canvas)
         );
 
         const cropped = canvas.toDataURL('image/jpeg', 0.95);
