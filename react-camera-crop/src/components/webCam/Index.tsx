@@ -80,7 +80,7 @@ export default function NativeWebCamWithCrop({ onCapture }: { onCapture: Functio
                     height: defaultHeight
                 });
             }
-        }, 1000);
+        }, 100);
     }, [image, cropMode]);
 
     const retakePhoto = () => {
@@ -451,7 +451,7 @@ export default function NativeWebCamWithCrop({ onCapture }: { onCapture: Functio
         // Automatically enable crop mode after a short delay to ensure image is loaded
         setTimeout(() => {
             setCropMode(true);
-        }, 2000);
+        }, 200);
 
         if (stream) {
             stream.getTracks().forEach(track => track.stop());

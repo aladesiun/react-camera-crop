@@ -532,36 +532,17 @@ const processCroppedImage = (cropData: PixelCrop) => {
 
     // Apply Y-axis reduction only if user hasn't interacted with default crop AND screen is small
     const scaleX = baseScaleX;
-    const scaleY = baseScaleY; // Always use full scale for coordinate conversion
+    const scaleY = (isDefaultCrop && isSmallScreen) ? baseScaleY * 0.5 : baseScaleY; // Reduce Y-axis by 50% for default crops on small screens
     
-    // For default crops on small screens, we'll reduce the height by cropping from top and bottom equally
-    let finalCropData = cropData;
-    if (isDefaultCrop && isSmallScreen) {
-        // Calculate how much to reduce from top and bottom (25% each = 50% total reduction)
-        const heightReduction = cropData.height * 0.5; // 50% total reduction
-        const topBottomReduction = heightReduction / 2; // 25% from top, 25% from bottom
-        
-        finalCropData = {
-            ...cropData,
-            y: cropData.y + topBottomReduction, // Move crop down (reduce from top)
-            height: cropData.height - heightReduction // Reduce total height
-        };
-        
-        console.log('PROCESS CROP - Applied top/bottom height reduction (50% for small screen):', {
-            originalCrop: cropData,
-            finalCrop: finalCropData,
-            heightReduction: heightReduction,
-            topBottomReduction: topBottomReduction,
-            screenWidth: window.innerWidth
-        });
-    }
+    // Use original crop data (no manual height adjustment needed)
+    const finalCropData = cropData;
 
     console.log('PROCESS CROP - Scale factors:', { 
         scaleX, 
         scaleY, 
         isDefaultCrop: isDefaultCrop,
         isSmallScreen: isSmallScreen,
-        heightReduction: (isDefaultCrop && isSmallScreen) ? '50% reduction from top/bottom (small screen)' : 'no reduction (user modified crop or large screen)'
+        yAxisReduced: (isDefaultCrop && isSmallScreen) ? '50% Y-axis scale reduction (small screen)' : 'no reduction (user modified crop or large screen)'
     });
 
     // Convert display coordinates to natural image coordinates
