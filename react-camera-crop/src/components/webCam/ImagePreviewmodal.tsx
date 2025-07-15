@@ -59,7 +59,7 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
         // Initialize crop area when entering crop mode
         // For mobile, always use the small screen ref
         const currentRef = imageRef.current;
-
+    
         if (currentRef) {
             // Wait for image to be loaded
             if (currentRef.complete && currentRef.naturalWidth > 0) {
@@ -69,7 +69,7 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
                 const defaultHeight = rect.height * 0.6;  // 60% of image height
                 const defaultX = (rect.width - defaultWidth) / 2;
                 const defaultY = (rect.height - defaultHeight) / 2;
-
+    
                 setCrop({
                     unit: 'px',
                     x: defaultX,
@@ -172,15 +172,9 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
         const cropWidth = cropToUse.width * scaleX;
         const cropHeight = cropToUse.height * scaleY;
 
-        // Force Y dimension to 500px, centered on the original crop
-        const targetYHeight = 500;
-        const originalCropCenterY = cropY + (cropHeight / 2);
-        const newCropY = originalCropCenterY - (targetYHeight / 2);
-        const newCropHeight = targetYHeight;
-
-        // Set canvas size to the forced Y dimension
+        // Set canvas size to the actual crop dimensions
         canvas.width = cropWidth;
-        canvas.height = newCropHeight;
+        canvas.height = cropHeight;
 
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
@@ -189,7 +183,7 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
         ctx.drawImage(
             img,
             cropX, cropY, cropWidth, cropHeight,  // Source rectangle (from natural image)
-            0, 0, cropWidth, cropHeight            // Destination rectangle (to canvas)
+            0, 0, cropWidth, cropHeight                // Destination rectangle (to canvas)
         );
 
         const cropped = canvas.toDataURL('image/jpeg', 0.95);
@@ -274,15 +268,22 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
         const cropWidth = cropToUse.width * scaleX;
         const cropHeight = cropToUse.height * scaleY;
 
-        // Force Y dimension to 700px, centered on the original crop
-        const targetYHeight = 700;
-        const originalCropCenterY = cropY + (cropHeight / 2);
-        const newCropY = originalCropCenterY - (targetYHeight / 2);
-        const newCropHeight = targetYHeight;
+        // Only force Y dimension to 700px if user hasn't interacted with default crop
+        let finalCropY = cropY;
+        let finalCropHeight = cropHeight;
+        
+        if (!completedCrop) {
+            // User hasn't interacted with default crop, force Y to 700px
+            const targetYHeight = 700;
+            const originalCropCenterY = cropY + (cropHeight / 2);
+            finalCropY = originalCropCenterY - (targetYHeight / 2);
+            finalCropHeight = targetYHeight;
+        }
+        // If completedCrop exists, user has interacted, so use their exact crop
 
-        // Set canvas size to the forced Y dimension
+        // Set canvas size to the final crop dimensions
         canvas.width = cropWidth;
-        canvas.height = newCropHeight;
+        canvas.height = finalCropHeight;
 
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
@@ -290,8 +291,8 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
         // Draw the cropped portion from the natural image with forced Y dimension
         ctx.drawImage(
             img,
-            cropX, newCropY, cropWidth, newCropHeight,  // Source rectangle (from natural image)
-            0, 0, cropWidth, newCropHeight              // Destination rectangle (to canvas)
+            cropX, finalCropY, cropWidth, finalCropHeight,  // Source rectangle (from natural image)
+            0, 0, cropWidth, finalCropHeight              // Destination rectangle (to canvas)
         );
 
         const cropped = canvas.toDataURL('image/jpeg', 0.95);
