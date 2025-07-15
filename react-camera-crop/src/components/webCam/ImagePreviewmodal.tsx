@@ -1,5 +1,3 @@
-
-// @ts-ignore
 import React, { useState, useEffect, useRef } from 'react';
 import { Box, Text } from '@chakra-ui/react';
 import { IoIosCloseCircle } from 'react-icons/io';
@@ -57,129 +55,42 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
     const imageRef = useRef<HTMLImageElement>(null);
     const imageRefLarge = useRef<HTMLImageElement>(null);
 
-    // const enableCropMode = (): void => {
-    //     // Initialize crop area when entering crop mode
-    //     // For mobile, always use the small screen ref
-    //     const currentRef = imageRef.current;
-    
-    //     if (currentRef) {
-    //         // Wait for image to be loaded
-    //         if (currentRef.complete && currentRef.naturalWidth > 0) {
-    //             const img = currentRef;
-    //             const rect = img.getBoundingClientRect();
-    //             const defaultWidth = rect.width * 0.8; // 80% of image width
-    //             const defaultHeight = rect.height * 0.6;
-    //             const defaultX = (rect.width - defaultWidth) / 2;
-    //             const defaultY = (rect.height - defaultHeight) / 2;
-    
-    //             const newCrop = {
-    //                 unit: 'px' as const,
-    //                 x: defaultX,
-    //                 y: defaultY,
-    //                 width: defaultWidth,
-    //                 height: defaultHeight
-    //             };
-    
-    //             setCrop(newCrop);
-                
-    //             // Also set completedCrop immediately so save works without moving
-    //             setCompletedCrop({
-    //                 unit: 'px',
-    //                 x: defaultX,
-    //                 y: defaultY,
-    //                 width: defaultWidth,
-    //                 height: defaultHeight
-    //             });
-    //         } else {
-    //             // If image not loaded, set a default crop and update when loaded
-    //             const newCrop = {
-    //                 unit: 'px' as const,
-    //                 x: 20,
-    //                 y: 20,
-    //                 width: 200,
-    //                 height: 150
-    //             };
-                
-    //             setCrop(newCrop);
-                
-    //             // Also set completedCrop
-    //             setCompletedCrop({
-    //                 unit: 'px',
-    //                 x: 20,
-    //                 y: 20,
-    //                 width: 200,
-    //                 height: 150
-    //             });
-    //         }
-    //     }
-    //     onCropModeChange?.(true);
-    // };
     const enableCropMode = (): void => {
+        // Initialize crop area when entering crop mode
+        // For mobile, always use the small screen ref
         const currentRef = imageRef.current;
-    
+
         if (currentRef) {
+            // Wait for image to be loaded
             if (currentRef.complete && currentRef.naturalWidth > 0) {
                 const img = currentRef;
                 const rect = img.getBoundingClientRect();
-                
-                // Mobile-specific: Create a crop that's obviously different from original
-                // This ensures Y-axis cropping is visible
-                const defaultWidth = rect.width * 0.8;   // 80% of width
-                const defaultHeight = rect.height * 0.6; // 60% of height 
-                const defaultX = (rect.width - defaultWidth) / 2; // Center horizontally
-                const defaultY = rect.height * 0.15; // Start 15% from top (crop more from bottom)
-    
-                const newCrop = {
-                    unit: 'px' as const,
-                    x: defaultX,
-                    y: defaultY,
-                    width: defaultWidth,
-                    height: defaultHeight
-                };
-    
-                console.log('MOBILE CROP INIT - Setting crop:', newCrop);
-                console.log('MOBILE CROP INIT - Image rect:', rect);
-                console.log('MOBILE CROP INIT - Crop will remove:', {
-                    topPercent: Math.round((defaultY / rect.height) * 100) + '%',
-                    bottomPercent: Math.round(((rect.height - defaultY - defaultHeight) / rect.height) * 100) + '%',
-                    leftPercent: Math.round((defaultX / rect.width) * 100) + '%',
-                    rightPercent: Math.round(((rect.width - defaultX - defaultWidth) / rect.width) * 100) + '%'
-                });
-    
-                setCrop(newCrop);
-                
-                // CRITICAL: Immediately set completedCrop so mobile save works
-                setCompletedCrop({
+                const defaultWidth = rect.width * 0.8; // 80% of image width
+                const defaultHeight = rect.height * 0.6;  // 60% of image height
+                const defaultX = (rect.width - defaultWidth) / 2;
+                const defaultY = (rect.height - defaultHeight) / 2;
+
+                setCrop({
                     unit: 'px',
                     x: defaultX,
                     y: defaultY,
                     width: defaultWidth,
                     height: defaultHeight
                 });
-    
-                console.log('MOBILE CROP INIT - Set completedCrop for immediate save capability');
             } else {
-                console.log('MOBILE CROP INIT - Image not loaded, using fallback');
-                const newCrop = {
-                    unit: 'px' as const,
-                    x: 60,
-                    y: 50,  // Start higher up
-                    width: 280,
-                    height: 180
-                };
-                
-                setCrop(newCrop);
-                setCompletedCrop({
+                // If image not loaded, set a default crop and update when loaded
+                setCrop({
                     unit: 'px',
-                    x: 60,
-                    y: 50,
-                    width: 280,
-                    height: 180
+                    x: 20,
+                    y: 20,
+                    width: 200,
+                    height: 150
                 });
             }
         }
         onCropModeChange?.(true);
     };
+
     const cancelCrop = (): void => {
         onCropModeChange?.(false);
     };
@@ -281,343 +192,96 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
     };
 
     // Save cropped image and close modal
-// Save cropped image and close modal - Debug version
-// const saveCroppedImage = () => {
-//     // For mobile, always use the small screen ref
-//     const currentRef = imageRef.current;
+    const saveCroppedImage = () => {
+        // For mobile, always use the small screen ref
+        const currentRef = imageRef.current;
 
-//     if (!currentRef) {
-//         console.error('Image ref not found');
-//         return;
-//     }
+        if (!currentRef) {
+            console.error('Image ref not found');
+            return;
+        }
 
-//     // Ensure image is loaded
-//     if (!currentRef.complete || currentRef.naturalWidth === 0) {
-//         console.error('Image not fully loaded');
-//         return;
-//     }
+        // Ensure image is loaded
+        if (!currentRef.complete || currentRef.naturalWidth === 0) {
+            console.error('Image not fully loaded');
+            return;
+        }
 
-//     // Use completedCrop if available, otherwise use current crop state
-//     let cropToUse: PixelCrop;
-    
-//     console.log('Debug - Current crop state:', crop);
-//     console.log('Debug - Completed crop state:', completedCrop);
+        // Use completedCrop if available, otherwise use current crop state
+        let cropToUse: PixelCrop;
 
-//     // Priority order: completedCrop -> current crop -> default crop
-//     if (completedCrop && completedCrop.width > 0 && completedCrop.height > 0) {
-//         cropToUse = completedCrop;
-//         console.log('Debug - Using completedCrop:', cropToUse);
-//     } else if (crop && crop.width > 0 && crop.height > 0) {
-//         // Ensure we have a valid PixelCrop object
-//         cropToUse = {
-//             unit: 'px',
-//             x: Number(crop.x) || 0,
-//             y: Number(crop.y) || 0,
-//             width: Number(crop.width) || 0,
-//             height: Number(crop.height) || 0
-//         };
-//         console.log('Debug - Using current crop:', cropToUse);
-//     } else {
-//         // Calculate default crop area if no valid crop exists
-//         const img = currentRef;
-//         const rect = img.getBoundingClientRect();
-//         const defaultWidth = rect.width * 0.8; // 80% of image width
-//         const defaultHeight = rect.height * 0.6;
-//         const defaultX = (rect.width - defaultWidth) / 2;
-//         const defaultY = (rect.height - defaultHeight) / 2;
+        if (completedCrop) {
+            cropToUse = completedCrop;
+        } else if (crop && crop.width > 0 && crop.height > 0) {
+            // Use current crop state if it's valid
+            cropToUse = {
+                unit: 'px',
+                x: crop.x,
+                y: crop.y,
+                width: crop.width,
+                height: crop.height
+            };
+        } else {
+            // Calculate default crop area if no valid crop exists
+            const img = currentRef;
+            const rect = img.getBoundingClientRect();
+            const defaultWidth = rect.width * 0.8; // 80% of image width
+            const defaultHeight = rect.height * 0.6;
+            const defaultX = (rect.width - defaultWidth) / 2;
+            const defaultY = (rect.height - defaultHeight) / 2;
 
-//         cropToUse = {
-//             unit: 'px',
-//             x: defaultX,
-//             y: defaultY,
-//             width: defaultWidth,
-//             height: defaultHeight
-//         };
-//         console.log('Debug - Using default crop:', cropToUse);
-//     }
+            cropToUse = {
+                unit: 'px',
+                x: defaultX,
+                y: defaultY,
+                width: defaultWidth,
+                height: defaultHeight
+            };
+        }
 
-//     // Additional validation to ensure we have valid crop dimensions
-//     if (cropToUse.width <= 0 || cropToUse.height <= 0) {
-//         console.error('Invalid crop dimensions, recalculating default');
-//         const img = currentRef;
-//         const rect = img.getBoundingClientRect();
-//         const defaultWidth = rect.width * 0.8;
-//         const defaultHeight = rect.height * 0.6;
-//         const defaultX = (rect.width - defaultWidth) / 2;
-//         const defaultY = (rect.height - defaultHeight) / 2;
+        const img = currentRef;
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
 
-//         cropToUse = {
-//             unit: 'px',
-//             x: defaultX,
-//             y: defaultY,
-//             width: defaultWidth,
-//             height: defaultHeight
-//         };
-//         console.log('Debug - Recalculated default crop:', cropToUse);
-//     }
+        // Get the natural image dimensions
+        const naturalWidth = img.naturalWidth;
+        const naturalHeight = img.naturalHeight;
 
-//     const img = currentRef;
-//     const canvas = document.createElement('canvas');
-//     const ctx = canvas.getContext('2d');
-//     if (!ctx) return;
+        // Get the displayed image dimensions
+        const displayRect = img.getBoundingClientRect();
+        const displayWidth = displayRect.width;
+        const displayHeight = displayRect.height;
 
-//     // Get the natural image dimensions
-//     const naturalWidth = img.naturalWidth;
-//     const naturalHeight = img.naturalHeight;
-//     console.log('Debug - Natural image dimensions:', { naturalWidth, naturalHeight });
+        // Calculate scale factors between display and natural size
+        // For screens ≤ 500px, reduce Y-axis by 50% to make images more compact
+        const isSmallScreen = window.innerWidth <= 500;
+        const scaleX = naturalWidth / displayWidth;
+        const scaleY = isSmallScreen ? (naturalHeight / displayHeight) * 0.5 : naturalHeight / displayHeight;
 
-//     // Get the displayed image dimensions
-//     const displayRect = img.getBoundingClientRect();
-//     const displayWidth = displayRect.width;
-//     const displayHeight = displayRect.height;
-//     console.log('Debug - Display image dimensions:', { displayWidth, displayHeight });
+        // Convert crop coordinates from display pixels to natural image pixels
+        const cropX = cropToUse.x * scaleX;
+        const cropY = cropToUse.y * scaleY;
+        const cropWidth = cropToUse.width * scaleX;
+        const cropHeight = cropToUse.height * scaleY;
 
-//     // Calculate scale factors between display and natural size
-//     const scaleX = naturalWidth / displayWidth;
-//     const scaleY = naturalHeight / displayHeight;
-//     console.log('Debug - Scale factors:', { scaleX, scaleY });
+        // Set canvas size to the actual crop dimensions
+        canvas.width = cropWidth;
+        canvas.height = cropHeight;
 
-//     // Convert crop coordinates from display pixels to natural image pixels
-//     const cropX = cropToUse.x * scaleX;
-//     const cropY = cropToUse.y * scaleY;
-//     const cropWidth = cropToUse.width * scaleX;
-//     const cropHeight = cropToUse.height * scaleY;
-    
-//     console.log('Debug - Scaled crop coordinates:', { 
-//         cropX, 
-//         cropY, 
-//         cropWidth, 
-//         cropHeight 
-//     });
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
 
-//     // Ensure crop dimensions are within bounds
-//     const finalCropX = Math.max(0, Math.min(cropX, naturalWidth));
-//     const finalCropY = Math.max(0, Math.min(cropY, naturalHeight));
-//     const finalCropWidth = Math.min(cropWidth, naturalWidth - finalCropX);
-//     const finalCropHeight = Math.min(cropHeight, naturalHeight - finalCropY);
-    
-//     console.log('Debug - Final crop coordinates:', { 
-//         finalCropX, 
-//         finalCropY, 
-//         finalCropWidth, 
-//         finalCropHeight 
-//     });
-
-//     // Set canvas size to the actual crop dimensions
-//     canvas.width = finalCropWidth;
-//     canvas.height = finalCropHeight;
-//     console.log('Debug - Canvas dimensions:', { width: canvas.width, height: canvas.height });
-
-//     ctx.imageSmoothingEnabled = true;
-//     ctx.imageSmoothingQuality = 'high';
-
-//     // Draw the cropped portion from the natural image
-//     ctx.drawImage(
-//         img,
-//         finalCropX, finalCropY, finalCropWidth, finalCropHeight,  // Source rectangle (from natural image)
-//         0, 0, finalCropWidth, finalCropHeight                     // Destination rectangle (to canvas)
-//     );
-
-//     const cropped = canvas.toDataURL('image/jpeg', 0.95);
-//     console.log('Debug - Cropped image data URL length:', cropped.length);
-//     onSave?.(cropped);
-// };
-// Mobile-specific save function with enhanced Y-axis debugging
-// Fixed save function for mobile - addresses coordinate system issues
-// Force ReactCrop to complete and then save
-const saveCroppedImage = () => {
-    const currentRef = imageRef.current;
-
-    if (!currentRef) {
-        console.error('Image ref not found');
-        return;
-    }
-
-    if (!currentRef.complete || currentRef.naturalWidth === 0) {
-        console.error('Image not fully loaded');
-        return;
-    }
-
-    console.log('FORCE COMPLETE - Current state:', { crop, completedCrop });
-
-    // If we don't have completedCrop, force it by manually calling the onComplete callback
-    if (!completedCrop && crop && crop.width > 0 && crop.height > 0) {
-        console.log('FORCE COMPLETE - No completedCrop found, forcing completion...');
-        
-        // Create the completed crop from current crop state
-        const forcedCompletedCrop: PixelCrop = {
-            unit: 'px',
-            x: Number(crop.x) || 0,
-            y: Number(crop.y) || 0,
-            width: Number(crop.width) || 0,
-            height: Number(crop.height) || 0
-        };
-        
-        console.log('FORCE COMPLETE - Created forced completedCrop:', forcedCompletedCrop);
-        
-        // Update the state and proceed
-        setCompletedCrop(forcedCompletedCrop);
-        
-        // Immediately use the forced crop for processing
-        processCroppedImage(forcedCompletedCrop);
-        return;
-    }
-    
-    // If we already have completedCrop, use it
-    if (completedCrop) {
-        console.log('FORCE COMPLETE - Using existing completedCrop');
-        processCroppedImage(completedCrop);
-        return;
-    }
-    
-    // Fallback: create a default crop
-    console.log('FORCE COMPLETE - No valid crop found, creating default');
-    const img = currentRef;
-    const rect = img.getBoundingClientRect();
-    const defaultCrop: PixelCrop = {
-        unit: 'px',
-        x: rect.width * 0.1,
-        y: rect.height * 0.15,
-        width: rect.width * 0.8,
-        height: rect.height * 0.6
-    };
-    
-    processCroppedImage(defaultCrop);
-};
-
-const processCroppedImage = (cropData: PixelCrop) => {
-    const currentRef = imageRef.current;
-    if (!currentRef) return;
-
-    console.log('PROCESS CROP - Processing with:', cropData);
-
-    const img = currentRef;
-    
-    // Get image dimensions
-    const naturalWidth = img.naturalWidth;
-    const naturalHeight = img.naturalHeight;
-    const displayRect = img.getBoundingClientRect();
-    const displayWidth = displayRect.width;
-    const displayHeight = displayRect.height;
-
-    // Calculate base scale factors
-    const baseScaleX = naturalWidth / displayWidth;
-    const baseScaleY = naturalHeight / displayHeight;
-
-    // Check if user has interacted with the crop area
-    // We'll consider it "default" if the crop is close to our default dimensions
-    const defaultWidth = displayWidth * 0.8; // 80% of width (from enableCropMode)
-    const defaultHeight = displayHeight * 0.6; // 60% of height (from enableCropMode)
-    const defaultX = (displayWidth - defaultWidth) / 2;
-    const defaultY = displayHeight * 0.15; // 15% from top (from enableCropMode)
-
-    // Tolerance for considering crop as "default" (within 10% of default dimensions)
-    const tolerance = 0.1;
-    const isDefaultCrop = 
-        Math.abs(cropData.width - defaultWidth) / defaultWidth < tolerance &&
-        Math.abs(cropData.height - defaultHeight) / defaultHeight < tolerance &&
-        Math.abs(cropData.x - defaultX) / defaultWidth < tolerance &&
-        Math.abs(cropData.y - defaultY) / defaultHeight < tolerance;
-
-    // Check if screen width is 500px or below
-    const isSmallScreen = window.innerWidth <= 500;
-
-    console.log('PROCESS CROP - Crop analysis:', {
-        currentCrop: cropData,
-        defaultCrop: { x: defaultX, y: defaultY, width: defaultWidth, height: defaultHeight },
-        isDefaultCrop: isDefaultCrop,
-        isSmallScreen: isSmallScreen,
-        screenWidth: window.innerWidth
-    });
-
-    // Apply Y-axis reduction only if user hasn't interacted with default crop AND screen is small
-    const scaleX = baseScaleX;
-    const scaleY = (isDefaultCrop && isSmallScreen) ? baseScaleY * 0.5 : baseScaleY; // Reduce Y-axis by 50% for default crops on small screens
-    
-    // Use original crop data (no manual height adjustment needed)
-    const finalCropData = cropData;
-
-    console.log('PROCESS CROP - Scale factors:', { 
-        scaleX, 
-        scaleY, 
-        isDefaultCrop: isDefaultCrop,
-        isSmallScreen: isSmallScreen,
-        yAxisReduced: (isDefaultCrop && isSmallScreen) ? '50% Y-axis scale reduction (small screen)' : 'no reduction (user modified crop or large screen)'
-    });
-
-    // Convert display coordinates to natural image coordinates
-    const naturalCropX = finalCropData.x * scaleX;
-    const naturalCropY = finalCropData.y * scaleY;
-    const naturalCropWidth = finalCropData.width * scaleX;
-    const naturalCropHeight = finalCropData.height * scaleY;
-
-    console.log('PROCESS CROP - Natural coordinates:', {
-        x: naturalCropX,
-        y: naturalCropY,
-        width: naturalCropWidth,
-        height: naturalCropHeight
-    });
-
-    // Verify this will actually crop the Y-axis
-    const topCropped = naturalCropY;
-    const bottomCropped = naturalHeight - (naturalCropY + naturalCropHeight);
-    const totalHeightReduction = topCropped + bottomCropped;
-    
-    console.log('PROCESS CROP - Y-axis cropping verification:', {
-        originalHeight: naturalHeight,
-        newHeight: naturalCropHeight,
-        topCropped: topCropped,
-        bottomCropped: bottomCropped,
-        totalHeightReduction: totalHeightReduction,
-        percentageRemaining: Math.round((naturalCropHeight / naturalHeight) * 100) + '%'
-    });
-
-    // Create canvas and crop
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    canvas.width = naturalCropWidth;
-    canvas.height = naturalCropHeight;
-
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-
-    console.log('PROCESS CROP - Drawing image with params:', {
-        source: [naturalCropX, naturalCropY, naturalCropWidth, naturalCropHeight],
-        destination: [0, 0, naturalCropWidth, naturalCropHeight],
-        isDefaultCrop: isDefaultCrop
-    });
-
-    try {
+        // Draw the cropped portion from the natural image
         ctx.drawImage(
             img,
-            naturalCropX, naturalCropY, naturalCropWidth, naturalCropHeight,
-            0, 0, naturalCropWidth, naturalCropHeight
+            cropX, cropY, cropWidth, cropHeight,  // Source rectangle (from natural image)
+            0, 0, cropWidth, cropHeight            // Destination rectangle (to canvas)
         );
 
-        const croppedDataURL = canvas.toDataURL('image/jpeg', 0.95);
-        
-        // Verify the result
-        const testImg = new Image();
-        testImg.onload = () => {
-            console.log('PROCESS CROP - Final image verification:', {
-                width: testImg.width,
-                height: testImg.height,
-                expectedWidth: naturalCropWidth,
-                expectedHeight: naturalCropHeight,
-                dimensionsMatch: testImg.width === naturalCropWidth && testImg.height === naturalCropHeight
-            });
-        };
-        testImg.src = croppedDataURL;
-
-        console.log('PROCESS CROP - Success! Calling onSave...');
-        onSave?.(croppedDataURL);
-        
-    } catch (error) {
-        console.error('PROCESS CROP - Error during canvas drawing:', error);
-    }
-};
+        const cropped = canvas.toDataURL('image/jpeg', 0.95);
+        onSave?.(cropped);
+    };
 
     // Reset croppedImage and crop state when a new image is loaded or retaken
     useEffect(() => {
@@ -762,7 +426,6 @@ const processCroppedImage = (cropData: PixelCrop) => {
                 >
 
                     {cropMode && (
-                        /* @ts-ignore */
                         <ReactCrop
                             crop={crop}
                             onChange={(c) => {
@@ -976,7 +639,263 @@ const processCroppedImage = (cropData: PixelCrop) => {
             </Box>
 
             {/* Large Screen Modal */}
-          
+            <Box
+                display={"none"}
+                id="campreview-container-lg"
+                bg="white"
+                minH="270px"
+                maxH="80vh"
+                maxW={"900px"}
+                minW="550px"
+                mx={"auto"}
+                position="fixed"
+                borderRadius="20px"
+                top="50%"
+                transform="translate(-50%, -50%)"
+                left="50%"
+                flexDirection="row"
+                justifyContent="stretch"
+                zIndex={999}
+                p="20px"
+                boxShadow="0 20px 40px rgba(0,0,0,0.3)"
+                style={{
+                    touchAction: cropMode ? 'none' : 'auto'
+                }}
+            >
+                {/* Image container */}
+                <Box
+                    position="relative"
+                    flex="1"
+                    minW="400px"
+                    borderRadius="10px"
+                    overflow="hidden"
+                    mr="20px"
+                    onMouseMove={onMouseMove}
+                    onMouseUp={onMouseUp}
+                    onMouseLeave={onMouseUp}
+                    onTouchMove={onTouchMove}
+                    onTouchEnd={onTouchEnd}
+                    style={{
+                        touchAction: cropMode ? 'none' : 'auto'
+                    }}
+                >
+                    {cropMode && (
+                        <ReactCrop
+                            crop={crop}
+                            onChange={(c) => {
+                                setCrop(c);
+                            }}
+                            onComplete={(c) => {
+                                setCompletedCrop(c);
+                            }}
+                            minWidth={30}
+                            minHeight={30}
+                            keepSelection
+                            style={{ zIndex: 10 }}
+                        >
+                            <img
+                                ref={imageRefLarge}
+                                src={image}
+                                alt="Captured ID"
+                                style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '10px', userSelect: 'none' }}
+                                draggable={false}
+                            />
+                        </ReactCrop>
+                    )}
+                    {!cropMode && croppedImage && (
+                        <img
+                            src={croppedImage}
+                            alt="Cropped Preview"
+                            style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                                borderRadius: '10px',
+                                display: 'block'
+                            }}
+                            draggable={false}
+                        />
+                    )}
+                    {!cropMode && !croppedImage && (
+                        <img
+                            ref={imageRefLarge}
+                            src={image}
+                            alt="Captured ID"
+                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '10px', userSelect: 'none' }}
+                            draggable={false}
+                        />
+                    )}
+                </Box>
+
+                {/* Action buttons - Side layout */}
+                <Box
+                    display="flex"
+                    flexDirection="column"
+                    justifyContent="center"
+                    alignItems="center"
+                    gap="1.5rem"
+                    minW="200px"
+                    px="10px"
+                    py="20px"
+                >
+                    {cropMode ? (
+                        // Crop mode buttons
+                        <>
+                            <Box
+                                bg="black"
+                                borderRadius="12px"
+                                color="white"
+                                px="2rem"
+                                py="15px"
+                                w="100%"
+                                h="60px"
+                                display="flex"
+                                justifyContent="center"
+                                alignItems="center"
+                                cursor="pointer"
+                                onClick={onRetake}
+                                _hover={{ bg: "gray.600" }}
+                                transition="all 0.2s"
+                            >
+                                <Text fontSize="16px" fontWeight="500" my={0}>
+                                    Retake
+                                </Text>
+                            </Box>
+
+                            <Box
+                                bg="#fd1774"
+                                borderRadius="12px"
+                                color="white"
+                                px="2rem"
+                                py="15px"
+                                w="100%"
+                                h="60px"
+                                display="flex"
+                                justifyContent="center"
+                                alignItems="center"
+                                cursor="pointer"
+                                onClick={saveCroppedImage}
+                                _hover={{ bg: "#e91560" }}
+                                transition="all 0.2s"
+                                boxShadow="0 2px 8px rgba(253, 23, 116, 0.25)"
+                            >
+                                <Text fontSize="16px" fontWeight="500" mr="8px" my={0}>
+                                    Save
+                                </Text>
+                                {/* @ts-ignore */}
+                                <FaCheck size={18} color="white" />
+                            </Box>
+
+                            {/* Close button as third button */}
+                            <Box
+                                bg="gray.500"
+                                borderRadius="12px"
+                                color="white"
+                                px="2rem"
+                                py="15px"
+                                w="100%"
+                                h="60px"
+                                display="flex"
+                                justifyContent="center"
+                                alignItems="center"
+                                cursor="pointer"
+                                onClick={onClose}
+                                _hover={{ bg: "gray.600" }}
+                                transition="all 0.2s"
+                                boxShadow="0 2px 8px rgba(0,0,0,0.15)"
+                            >
+                                <Text fontSize="16px" color="black" fontWeight="500" mr="8px" my={0}>
+                                    Close
+                                </Text>
+                                {/* @ts-ignore */}
+                                <IoIosCloseCircle color="black" size={20} />
+                            </Box>
+                        </>
+                    ) : (
+                        // Normal mode buttons
+                        <>
+                            <Box
+                                bg="black"
+                                borderRadius="12px"
+                                color="white"
+                                px="2rem"
+                                py="15px"
+                                w="100%"
+                                h="60px"
+                                display="flex"
+                                justifyContent="center"
+                                alignItems="center"
+                                cursor="pointer"
+                                onClick={enableCropMode}
+                                _hover={{ bg: "gray.800" }}
+                                transition="all 0.2s"
+                                boxShadow="0 2px 8px rgba(0,0,0,0.15)"
+                            >
+                                <Text fontSize="16px" fontWeight="500" mr="8px" my={0}>
+                                    Crop
+                                </Text>
+                                {/* @ts-ignore */}
+                                <FaCrop size={18} color="white" />
+                            </Box>
+
+                            <Box
+                                bg="gray.600"
+                                borderRadius="12px"
+                                color="black"
+                                px="2rem"
+                                py="15px"
+                                w="100%"
+                                h="60px"
+                                display="flex"
+                                justifyContent="center"
+                                alignItems="center"
+                                cursor="pointer"
+                                onClick={() => {
+                                    // Use cropped image if available, otherwise use original
+                                    if (croppedImage) {
+                                        onSave?.(croppedImage);
+                                    } else {
+                                        onSave?.(image);
+                                    }
+                                }}
+                                _hover={{ bg: "gray.700" }}
+                                transition="all 0.2s"
+                                boxShadow="0 2px 8px rgba(0,0,0,0.15)"
+                            >
+                                <Text fontSize="16px" fontWeight="500" mr="8px" my={0}>
+                                    Save
+                                </Text>
+                                {/* @ts-ignore */}
+                                <IoSaveOutline size={20} color="black" />
+                            </Box>
+
+                            <Box
+                                bg="gray.500"
+                                borderRadius="12px"
+                                color="white"
+                                px="2rem"
+                                py="15px"
+                                w="100%"
+                                h="60px"
+                                display="flex"
+                                justifyContent="center"
+                                alignItems="center"
+                                cursor="pointer"
+                                onClick={onClose}
+                                _hover={{ bg: "gray.600" }}
+                                transition="all 0.2s"
+                                boxShadow="0 2px 8px rgba(0,0,0,0.15)"
+                            >
+                                <Text fontSize="16px" fontWeight="500" mr="8px" my={0}>
+                                    Close
+                                </Text>
+                                {/* @ts-ignore */}
+                                <IoIosCloseCircle color="white" size={20} />
+                            </Box>
+                        </>
+                    )}
+                </Box>
+            </Box>
         </>
     );
 };
