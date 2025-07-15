@@ -500,31 +500,82 @@ const processCroppedImage = (cropData: PixelCrop) => {
     const displayWidth = displayRect.width;
     const displayHeight = displayRect.height;
 
-    // Calculate scale factors and reduce Y-axis by 50%
-    const scaleX = naturalWidth / displayWidth;
-    const scaleY = (naturalHeight / displayHeight) * 0.5; // Reduce Y-axis scale by 50%
+    // Calculate base scale factors
+    const baseScaleX = naturalWidth / displayWidth;
+    const baseScaleY = naturalHeight / displayHeight;
 
-    console.log('PROCESS CROP - Scale factors (Y reduced by 50%):', { scaleX, scaleY });
+    // Check if user has interacted with the crop area
+    // We'll consider it "default" if the crop is close to our default dimensions
+    const defaultWidth = displayWidth * 0.8; // 80% of width (from enableCropMode)
+    const defaultHeight = displayHeight * 0.6; // 60% of height (from enableCropMode)
+    const defaultX = (displayWidth - defaultWidth) / 2;
+    const defaultY = displayHeight * 0.15; // 15% from top (from enableCropMode)
 
-    // Convert display coordinates to natural image coordinates with Y-axis reduction
-    const naturalCropX = cropData.x * scaleX;
-    const naturalCropY = cropData.y * scaleY; // Y-axis reduced by 50%
-    const naturalCropWidth = cropData.width * scaleX;
-    const naturalCropHeight = cropData.height * scaleY; // Y-axis reduced by 50%
+    // Tolerance for considering crop as "default" (within 10% of default dimensions)
+    const tolerance = 0.1;
+    const isDefaultCrop = 
+        Math.abs(cropData.width - defaultWidth) / defaultWidth < tolerance &&
+        Math.abs(cropData.height - defaultHeight) / defaultHeight < tolerance &&
+        Math.abs(cropData.x - defaultX) / defaultWidth < tolerance &&
+        Math.abs(cropData.y - defaultY) / defaultHeight < tolerance;
 
-    console.log('PROCESS CROP - Natural coordinates (Y reduced by 50%):', {
+    console.log('PROCESS CROP - Crop analysis:', {
+        currentCrop: cropData,
+        defaultCrop: { x: defaultX, y: defaultY, width: defaultWidth, height: defaultHeight },
+        isDefaultCrop: isDefaultCrop
+    });
+
+    // Apply Y-axis reduction only if user hasn't interacted with default crop
+    const scaleX = baseScaleX;
+    const scaleY = baseScaleY; // Always use full scale for coordinate conversion
+    
+    // For default crops, we'll reduce the height by cropping from top and bottom equally
+    let finalCropData = cropData;
+    if (isDefaultCrop) {
+        // Calculate how much to reduce from top and bottom (20% each = 40% total reduction)
+        const heightReduction = cropData.height * 0.4; // 40% total reduction
+        const topBottomReduction = heightReduction / 2; // 20% from top, 20% from bottom
+        
+        finalCropData = {
+            ...cropData,
+            y: cropData.y + topBottomReduction, // Move crop down (reduce from top)
+            height: cropData.height - heightReduction // Reduce total height
+        };
+        
+        console.log('PROCESS CROP - Applied top/bottom height reduction:', {
+            originalCrop: cropData,
+            finalCrop: finalCropData,
+            heightReduction: heightReduction,
+            topBottomReduction: topBottomReduction
+        });
+    }
+
+    console.log('PROCESS CROP - Scale factors:', { 
+        scaleX, 
+        scaleY, 
+        isDefaultCrop: isDefaultCrop,
+        heightReduction: isDefaultCrop ? '40% reduction from top/bottom' : 'no reduction (user modified crop)'
+    });
+
+    // Convert display coordinates to natural image coordinates
+    const naturalCropX = finalCropData.x * scaleX;
+    const naturalCropY = finalCropData.y * scaleY;
+    const naturalCropWidth = finalCropData.width * scaleX;
+    const naturalCropHeight = finalCropData.height * scaleY;
+
+    console.log('PROCESS CROP - Natural coordinates:', {
         x: naturalCropX,
         y: naturalCropY,
         width: naturalCropWidth,
         height: naturalCropHeight
     });
 
-    // Verify this will actually crop the Y-axis with 50% reduction
+    // Verify this will actually crop the Y-axis
     const topCropped = naturalCropY;
     const bottomCropped = naturalHeight - (naturalCropY + naturalCropHeight);
     const totalHeightReduction = topCropped + bottomCropped;
     
-    console.log('PROCESS CROP - Y-axis cropping verification (50% reduction):', {
+    console.log('PROCESS CROP - Y-axis cropping verification:', {
         originalHeight: naturalHeight,
         newHeight: naturalCropHeight,
         topCropped: topCropped,
@@ -544,9 +595,10 @@ const processCroppedImage = (cropData: PixelCrop) => {
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
 
-    console.log('PROCESS CROP - Drawing image with params (Y reduced by 50%):', {
+    console.log('PROCESS CROP - Drawing image with params:', {
         source: [naturalCropX, naturalCropY, naturalCropWidth, naturalCropHeight],
-        destination: [0, 0, naturalCropWidth, naturalCropHeight]
+        destination: [0, 0, naturalCropWidth, naturalCropHeight],
+        isDefaultCrop: isDefaultCrop
     });
 
     try {
@@ -561,7 +613,7 @@ const processCroppedImage = (cropData: PixelCrop) => {
         // Verify the result
         const testImg = new Image();
         testImg.onload = () => {
-            console.log('PROCESS CROP - Final image verification (Y reduced by 50%):', {
+            console.log('PROCESS CROP - Final image verification:', {
                 width: testImg.width,
                 height: testImg.height,
                 expectedWidth: naturalCropWidth,
