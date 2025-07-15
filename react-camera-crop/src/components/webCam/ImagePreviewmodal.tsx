@@ -216,96 +216,147 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
     };
 
     // Save cropped image and close modal
-    const saveCroppedImage = () => {
-        // For mobile, always use the small screen ref
-        const currentRef = imageRef.current;
+// Save cropped image and close modal - Debug version
+const saveCroppedImage = () => {
+    // For mobile, always use the small screen ref
+    const currentRef = imageRef.current;
 
-        if (!currentRef) {
-            console.error('Image ref not found');
-            return;
-        }
+    if (!currentRef) {
+        console.error('Image ref not found');
+        return;
+    }
 
-        // Ensure image is loaded
-        if (!currentRef.complete || currentRef.naturalWidth === 0) {
-            console.error('Image not fully loaded');
-            return;
-        }
+    // Ensure image is loaded
+    if (!currentRef.complete || currentRef.naturalWidth === 0) {
+        console.error('Image not fully loaded');
+        return;
+    }
 
-        // Use completedCrop if available, otherwise use current crop state
-        let cropToUse: PixelCrop;
-        console.log(crop,completedCrop, );
-        
+    // Use completedCrop if available, otherwise use current crop state
+    let cropToUse: PixelCrop;
+    
+    console.log('Debug - Current crop state:', crop);
+    console.log('Debug - Completed crop state:', completedCrop);
 
-        if (completedCrop) {
-            cropToUse = completedCrop;
-        } else if (crop && crop.width > 0 && crop.height > 0) {
-            // Use current crop state if it's valid
-            cropToUse = {
-                unit: 'px',
-                x: crop.x,
-                y: crop.y,
-                width: crop.width,
-                height: crop.height
-            };
-        } else {
-            // Calculate default crop area if no valid crop exists
-            const img = currentRef;
-            const rect = img.getBoundingClientRect();
-            const defaultWidth = rect.width * 0.8; // 80% of image width
-            const defaultHeight = rect.height * 0.6;
-            const defaultX = (rect.width - defaultWidth) / 2;
-            const defaultY = (rect.height - defaultHeight) / 2;
-
-            cropToUse = {
-                unit: 'px',
-                x: defaultX,
-                y: defaultY,
-                width: defaultWidth,
-                height: defaultHeight
-            };
-        }
-
+    // Priority order: completedCrop -> current crop -> default crop
+    if (completedCrop && completedCrop.width > 0 && completedCrop.height > 0) {
+        cropToUse = completedCrop;
+        console.log('Debug - Using completedCrop:', cropToUse);
+    } else if (crop && crop.width > 0 && crop.height > 0) {
+        // Ensure we have a valid PixelCrop object
+        cropToUse = {
+            unit: 'px',
+            x: Number(crop.x) || 0,
+            y: Number(crop.y) || 0,
+            width: Number(crop.width) || 0,
+            height: Number(crop.height) || 0
+        };
+        console.log('Debug - Using current crop:', cropToUse);
+    } else {
+        // Calculate default crop area if no valid crop exists
         const img = currentRef;
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
+        const rect = img.getBoundingClientRect();
+        const defaultWidth = rect.width * 0.8; // 80% of image width
+        const defaultHeight = rect.height * 0.6;
+        const defaultX = (rect.width - defaultWidth) / 2;
+        const defaultY = (rect.height - defaultHeight) / 2;
 
-        // Get the natural image dimensions
-        const naturalWidth = img.naturalWidth;
-        const naturalHeight = img.naturalHeight;
+        cropToUse = {
+            unit: 'px',
+            x: defaultX,
+            y: defaultY,
+            width: defaultWidth,
+            height: defaultHeight
+        };
+        console.log('Debug - Using default crop:', cropToUse);
+    }
 
-        // Get the displayed image dimensions
-        const displayRect = img.getBoundingClientRect();
-        const displayWidth = displayRect.width;
-        const displayHeight = displayRect.height;
+    // Additional validation to ensure we have valid crop dimensions
+    if (cropToUse.width <= 0 || cropToUse.height <= 0) {
+        console.error('Invalid crop dimensions, recalculating default');
+        const img = currentRef;
+        const rect = img.getBoundingClientRect();
+        const defaultWidth = rect.width * 0.8;
+        const defaultHeight = rect.height * 0.6;
+        const defaultX = (rect.width - defaultWidth) / 2;
+        const defaultY = (rect.height - defaultHeight) / 2;
 
-        // Calculate scale factors between display and natural size
-        const scaleX = naturalWidth / displayWidth;
-        const scaleY = naturalHeight / displayHeight;
+        cropToUse = {
+            unit: 'px',
+            x: defaultX,
+            y: defaultY,
+            width: defaultWidth,
+            height: defaultHeight
+        };
+        console.log('Debug - Recalculated default crop:', cropToUse);
+    }
 
-        // Convert crop coordinates from display pixels to natural image pixels
-        const cropX = cropToUse.x * scaleX;
-        const cropY = cropToUse.y * scaleY;
-        const cropWidth = cropToUse.width * scaleX;
-        const cropHeight = cropToUse.height * scaleY;
+    const img = currentRef;
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
-        // Set canvas size to the actual crop dimensions
-        canvas.width = cropWidth;
-        canvas.height = cropHeight;
+    // Get the natural image dimensions
+    const naturalWidth = img.naturalWidth;
+    const naturalHeight = img.naturalHeight;
+    console.log('Debug - Natural image dimensions:', { naturalWidth, naturalHeight });
 
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
+    // Get the displayed image dimensions
+    const displayRect = img.getBoundingClientRect();
+    const displayWidth = displayRect.width;
+    const displayHeight = displayRect.height;
+    console.log('Debug - Display image dimensions:', { displayWidth, displayHeight });
 
-        // Draw the cropped portion from the natural image
-        ctx.drawImage(
-            img,
-            cropX, cropY, cropWidth, cropHeight,  // Source rectangle (from natural image)
-            0, 0, cropWidth, cropHeight            // Destination rectangle (to canvas)
-        );
+    // Calculate scale factors between display and natural size
+    const scaleX = naturalWidth / displayWidth;
+    const scaleY = naturalHeight / displayHeight;
+    console.log('Debug - Scale factors:', { scaleX, scaleY });
 
-        const cropped = canvas.toDataURL('image/jpeg', 0.95);
-        onSave?.(cropped);
-    };
+    // Convert crop coordinates from display pixels to natural image pixels
+    const cropX = cropToUse.x * scaleX;
+    const cropY = cropToUse.y * scaleY;
+    const cropWidth = cropToUse.width * scaleX;
+    const cropHeight = cropToUse.height * scaleY;
+    
+    console.log('Debug - Scaled crop coordinates:', { 
+        cropX, 
+        cropY, 
+        cropWidth, 
+        cropHeight 
+    });
+
+    // Ensure crop dimensions are within bounds
+    const finalCropX = Math.max(0, Math.min(cropX, naturalWidth));
+    const finalCropY = Math.max(0, Math.min(cropY, naturalHeight));
+    const finalCropWidth = Math.min(cropWidth, naturalWidth - finalCropX);
+    const finalCropHeight = Math.min(cropHeight, naturalHeight - finalCropY);
+    
+    console.log('Debug - Final crop coordinates:', { 
+        finalCropX, 
+        finalCropY, 
+        finalCropWidth, 
+        finalCropHeight 
+    });
+
+    // Set canvas size to the actual crop dimensions
+    canvas.width = finalCropWidth;
+    canvas.height = finalCropHeight;
+    console.log('Debug - Canvas dimensions:', { width: canvas.width, height: canvas.height });
+
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+
+    // Draw the cropped portion from the natural image
+    ctx.drawImage(
+        img,
+        finalCropX, finalCropY, finalCropWidth, finalCropHeight,  // Source rectangle (from natural image)
+        0, 0, finalCropWidth, finalCropHeight                     // Destination rectangle (to canvas)
+    );
+
+    const cropped = canvas.toDataURL('image/jpeg', 0.95);
+    console.log('Debug - Cropped image data URL length:', cropped.length);
+    onSave?.(cropped);
+};
 
     // Reset croppedImage and crop state when a new image is loaded or retaken
     useEffect(() => {
