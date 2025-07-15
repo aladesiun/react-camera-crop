@@ -500,31 +500,31 @@ const processCroppedImage = (cropData: PixelCrop) => {
     const displayWidth = displayRect.width;
     const displayHeight = displayRect.height;
 
-    // Calculate scale factors
+    // Calculate scale factors and reduce Y-axis by 50%
     const scaleX = naturalWidth / displayWidth;
-    const scaleY = naturalHeight / displayHeight;
+    const scaleY = (naturalHeight / displayHeight) * 0.5; // Reduce Y-axis scale by 50%
 
-    console.log('PROCESS CROP - Scale factors:', { scaleX, scaleY });
+    console.log('PROCESS CROP - Scale factors (Y reduced by 50%):', { scaleX, scaleY });
 
-    // Convert display coordinates to natural image coordinates
+    // Convert display coordinates to natural image coordinates with Y-axis reduction
     const naturalCropX = cropData.x * scaleX;
-    const naturalCropY = cropData.y * scaleY;
+    const naturalCropY = cropData.y * scaleY; // Y-axis reduced by 50%
     const naturalCropWidth = cropData.width * scaleX;
-    const naturalCropHeight = cropData.height * scaleY;
+    const naturalCropHeight = cropData.height * scaleY; // Y-axis reduced by 50%
 
-    console.log('PROCESS CROP - Natural coordinates:', {
+    console.log('PROCESS CROP - Natural coordinates (Y reduced by 50%):', {
         x: naturalCropX,
         y: naturalCropY,
         width: naturalCropWidth,
         height: naturalCropHeight
     });
 
-    // Verify this will actually crop the Y-axis
+    // Verify this will actually crop the Y-axis with 50% reduction
     const topCropped = naturalCropY;
     const bottomCropped = naturalHeight - (naturalCropY + naturalCropHeight);
     const totalHeightReduction = topCropped + bottomCropped;
     
-    console.log('PROCESS CROP - Y-axis cropping verification:', {
+    console.log('PROCESS CROP - Y-axis cropping verification (50% reduction):', {
         originalHeight: naturalHeight,
         newHeight: naturalCropHeight,
         topCropped: topCropped,
@@ -544,7 +544,7 @@ const processCroppedImage = (cropData: PixelCrop) => {
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
 
-    console.log('PROCESS CROP - Drawing image with params:', {
+    console.log('PROCESS CROP - Drawing image with params (Y reduced by 50%):', {
         source: [naturalCropX, naturalCropY, naturalCropWidth, naturalCropHeight],
         destination: [0, 0, naturalCropWidth, naturalCropHeight]
     });
@@ -561,7 +561,7 @@ const processCroppedImage = (cropData: PixelCrop) => {
         // Verify the result
         const testImg = new Image();
         testImg.onload = () => {
-            console.log('PROCESS CROP - Final image verification:', {
+            console.log('PROCESS CROP - Final image verification (Y reduced by 50%):', {
                 width: testImg.width,
                 height: testImg.height,
                 expectedWidth: naturalCropWidth,
