@@ -451,7 +451,7 @@ export default function NativeWebCamWithCrop({ onCapture }: { onCapture: Functio
         // Automatically enable crop mode after a short delay to ensure image is loaded
         setTimeout(() => {
             setCropMode(true);
-        }, 100);
+        }, 2000);
 
         if (stream) {
             stream.getTracks().forEach(track => track.stop());
