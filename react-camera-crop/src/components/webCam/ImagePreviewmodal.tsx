@@ -424,6 +424,7 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
 // };
 // Mobile-specific save function with enhanced Y-axis debugging
 // Fixed save function for mobile - addresses coordinate system issues
+// Force ReactCrop to complete and then save
 const saveCroppedImage = () => {
     const currentRef = imageRef.current;
 
@@ -437,159 +438,145 @@ const saveCroppedImage = () => {
         return;
     }
 
-    let cropToUse: PixelCrop;
-    
-    console.log('MOBILE FIX - Current crop state:', crop);
-    console.log('MOBILE FIX - Completed crop state:', completedCrop);
+    console.log('FORCE COMPLETE - Current state:', { crop, completedCrop });
 
-    // The key fix: Always ensure we have a valid crop, and handle coordinate system properly
-    if (completedCrop && completedCrop.width > 0 && completedCrop.height > 0) {
-        cropToUse = completedCrop;
-        console.log('MOBILE FIX - Using completedCrop:', cropToUse);
-    } else if (crop && crop.width > 0 && crop.height > 0) {
-        // IMPORTANT: For mobile, we need to ensure crop coordinates are relative to the image, not the container
-        const img = currentRef;
-        const imgRect = img.getBoundingClientRect();
+    // If we don't have completedCrop, force it by manually calling the onComplete callback
+    if (!completedCrop && crop && crop.width > 0 && crop.height > 0) {
+        console.log('FORCE COMPLETE - No completedCrop found, forcing completion...');
         
-        // Check if crop coordinates seem relative to container vs image
-        // If crop.x + crop.width > image width, coordinates might be container-relative
-        const isContainerRelative = (crop.x + crop.width > imgRect.width) || (crop.y + crop.height > imgRect.height);
-        
-        if (isContainerRelative) {
-            console.log('MOBILE FIX - Detected container-relative coordinates, converting...');
-            // Convert container-relative to image-relative coordinates
-            const containerRect = img.parentElement?.getBoundingClientRect() || imgRect;
-            const imgOffsetX = imgRect.left - containerRect.left;
-            const imgOffsetY = imgRect.top - containerRect.top;
-            
-            cropToUse = {
-                unit: 'px',
-                x: Math.max(0, crop.x - imgOffsetX),
-                y: Math.max(0, crop.y - imgOffsetY),
-                width: crop.width,
-                height: crop.height
-            };
-            console.log('MOBILE FIX - Converted crop coordinates:', cropToUse);
-        } else {
-            cropToUse = {
-                unit: 'px',
-                x: Number(crop.x) || 0,
-                y: Number(crop.y) || 0,
-                width: Number(crop.width) || 0,
-                height: Number(crop.height) || 0
-            };
-            console.log('MOBILE FIX - Using crop coordinates as-is:', cropToUse);
-        }
-    } else {
-        // Fallback to a guaranteed working crop
-        const img = currentRef;
-        const rect = img.getBoundingClientRect();
-        const defaultWidth = rect.width * 0.7;
-        const defaultHeight = rect.height * 0.5; // More aggressive height crop
-        const defaultX = (rect.width - defaultWidth) / 2;
-        const defaultY = rect.height * 0.2; // Start 20% from top
-
-        cropToUse = {
+        // Create the completed crop from current crop state
+        const forcedCompletedCrop: PixelCrop = {
             unit: 'px',
-            x: defaultX,
-            y: defaultY,
-            width: defaultWidth,
-            height: defaultHeight
+            x: Number(crop.x) || 0,
+            y: Number(crop.y) || 0,
+            width: Number(crop.width) || 0,
+            height: Number(crop.height) || 0
         };
-        console.log('MOBILE FIX - Using fallback crop:', cropToUse);
+        
+        console.log('FORCE COMPLETE - Created forced completedCrop:', forcedCompletedCrop);
+        
+        // Update the state and proceed
+        setCompletedCrop(forcedCompletedCrop);
+        
+        // Immediately use the forced crop for processing
+        processCroppedImage(forcedCompletedCrop);
+        return;
     }
-
-    // Additional validation - ensure crop is within image bounds
-    const img = currentRef;
-    const imgRect = img.getBoundingClientRect();
     
-    // Clamp crop to image boundaries
-    const clampedCrop = {
-        unit: 'px' as const,
-        x: Math.max(0, Math.min(cropToUse.x, imgRect.width - 10)),
-        y: Math.max(0, Math.min(cropToUse.y, imgRect.height - 10)),
-        width: Math.max(10, Math.min(cropToUse.width, imgRect.width - cropToUse.x)),
-        height: Math.max(10, Math.min(cropToUse.height, imgRect.height - cropToUse.y))
+    // If we already have completedCrop, use it
+    if (completedCrop) {
+        console.log('FORCE COMPLETE - Using existing completedCrop');
+        processCroppedImage(completedCrop);
+        return;
+    }
+    
+    // Fallback: create a default crop
+    console.log('FORCE COMPLETE - No valid crop found, creating default');
+    const img = currentRef;
+    const rect = img.getBoundingClientRect();
+    const defaultCrop: PixelCrop = {
+        unit: 'px',
+        x: rect.width * 0.1,
+        y: rect.height * 0.15,
+        width: rect.width * 0.8,
+        height: rect.height * 0.6
     };
     
-    console.log('MOBILE FIX - Clamped crop:', clampedCrop);
-    console.log('MOBILE FIX - Image rect for reference:', { width: imgRect.width, height: imgRect.height });
+    processCroppedImage(defaultCrop);
+};
 
+const processCroppedImage = (cropData: PixelCrop) => {
+    const currentRef = imageRef.current;
+    if (!currentRef) return;
+
+    console.log('PROCESS CROP - Processing with:', cropData);
+
+    const img = currentRef;
+    
+    // Get image dimensions
     const naturalWidth = img.naturalWidth;
     const naturalHeight = img.naturalHeight;
-    
-    // Use the actual rendered image dimensions
-    const displayWidth = imgRect.width;
-    const displayHeight = imgRect.height;
-    
-    console.log('MOBILE FIX - Dimensions:', { 
-        natural: { width: naturalWidth, height: naturalHeight },
-        display: { width: displayWidth, height: displayHeight }
-    });
+    const displayRect = img.getBoundingClientRect();
+    const displayWidth = displayRect.width;
+    const displayHeight = displayRect.height;
 
+    // Calculate scale factors
     const scaleX = naturalWidth / displayWidth;
     const scaleY = naturalHeight / displayHeight;
-    
-    console.log('MOBILE FIX - Scale factors:', { scaleX, scaleY });
 
-    // Apply scaling to clamped crop
-    const finalCropX = clampedCrop.x * scaleX;
-    const finalCropY = clampedCrop.y * scaleY;
-    const finalCropWidth = clampedCrop.width * scaleX;
-    const finalCropHeight = clampedCrop.height * scaleY;
-    
-    console.log('MOBILE FIX - Final scaled crop:', { 
-        x: finalCropX, y: finalCropY, 
-        width: finalCropWidth, height: finalCropHeight 
+    console.log('PROCESS CROP - Scale factors:', { scaleX, scaleY });
+
+    // Convert display coordinates to natural image coordinates
+    const naturalCropX = cropData.x * scaleX;
+    const naturalCropY = cropData.y * scaleY;
+    const naturalCropWidth = cropData.width * scaleX;
+    const naturalCropHeight = cropData.height * scaleY;
+
+    console.log('PROCESS CROP - Natural coordinates:', {
+        x: naturalCropX,
+        y: naturalCropY,
+        width: naturalCropWidth,
+        height: naturalCropHeight
     });
 
-    // Verify Y-axis cropping
-    const topCropped = finalCropY;
-    const bottomCropped = naturalHeight - (finalCropY + finalCropHeight);
-    console.log('MOBILE FIX - Y-axis verification:', {
+    // Verify this will actually crop the Y-axis
+    const topCropped = naturalCropY;
+    const bottomCropped = naturalHeight - (naturalCropY + naturalCropHeight);
+    const totalHeightReduction = topCropped + bottomCropped;
+    
+    console.log('PROCESS CROP - Y-axis cropping verification:', {
         originalHeight: naturalHeight,
-        finalHeight: finalCropHeight,
+        newHeight: naturalCropHeight,
         topCropped: topCropped,
         bottomCropped: bottomCropped,
-        percentageOfOriginalHeight: Math.round((finalCropHeight / naturalHeight) * 100) + '%'
+        totalHeightReduction: totalHeightReduction,
+        percentageRemaining: Math.round((naturalCropHeight / naturalHeight) * 100) + '%'
     });
 
-    // Create canvas and draw
+    // Create canvas and crop
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    canvas.width = finalCropWidth;
-    canvas.height = finalCropHeight;
+    canvas.width = naturalCropWidth;
+    canvas.height = naturalCropHeight;
 
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
 
-    console.log('MOBILE FIX - Drawing with params:', {
-        source: [finalCropX, finalCropY, finalCropWidth, finalCropHeight],
-        dest: [0, 0, finalCropWidth, finalCropHeight]
+    console.log('PROCESS CROP - Drawing image with params:', {
+        source: [naturalCropX, naturalCropY, naturalCropWidth, naturalCropHeight],
+        destination: [0, 0, naturalCropWidth, naturalCropHeight]
     });
 
-    ctx.drawImage(
-        img,
-        finalCropX, finalCropY, finalCropWidth, finalCropHeight,
-        0, 0, finalCropWidth, finalCropHeight
-    );
+    try {
+        ctx.drawImage(
+            img,
+            naturalCropX, naturalCropY, naturalCropWidth, naturalCropHeight,
+            0, 0, naturalCropWidth, naturalCropHeight
+        );
 
-    const cropped = canvas.toDataURL('image/jpeg', 0.95);
-    
-    // Final verification
-    const verifyImg = new Image();
-    verifyImg.onload = () => {
-        console.log('MOBILE FIX - Final result dimensions:', {
-            width: verifyImg.width,
-            height: verifyImg.height,
-            aspectRatio: Math.round((verifyImg.width / verifyImg.height) * 100) / 100
-        });
-    };
-    verifyImg.src = cropped;
-    
-    onSave?.(cropped);
+        const croppedDataURL = canvas.toDataURL('image/jpeg', 0.95);
+        
+        // Verify the result
+        const testImg = new Image();
+        testImg.onload = () => {
+            console.log('PROCESS CROP - Final image verification:', {
+                width: testImg.width,
+                height: testImg.height,
+                expectedWidth: naturalCropWidth,
+                expectedHeight: naturalCropHeight,
+                dimensionsMatch: testImg.width === naturalCropWidth && testImg.height === naturalCropHeight
+            });
+        };
+        testImg.src = croppedDataURL;
+
+        console.log('PROCESS CROP - Success! Calling onSave...');
+        onSave?.(croppedDataURL);
+        
+    } catch (error) {
+        console.error('PROCESS CROP - Error during canvas drawing:', error);
+    }
 };
 
     // Reset croppedImage and crop state when a new image is loaded or retaken
