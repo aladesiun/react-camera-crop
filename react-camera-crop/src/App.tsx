@@ -16,7 +16,7 @@ function App() {
 
     return (
         <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
-            <h1>Simple Camera Test</h1>
+            <h1>Simple Camera Test new 1</h1>
             <p>Testing basic camera functionality without external dependencies</p>
             
             <NativeWebCamWithCrop onCapture={handleCapture} />
