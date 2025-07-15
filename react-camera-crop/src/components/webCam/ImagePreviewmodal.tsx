@@ -238,6 +238,11 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
                 height: defaultHeight
             };
         }
+        console.log(cropToUse, "cropToUse");
+        console.log(crop, "crop");  
+        console.log(completedCrop, "completedCrop");
+        
+        
 
         const img = currentRef;
         const canvas = document.createElement('canvas');
@@ -254,10 +259,8 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
         const displayHeight = displayRect.height;
 
         // Calculate scale factors between display and natural size
-        // For screens ≤ 500px, reduce Y-axis by 50% to make images more compact
-        const isSmallScreen = window.innerWidth <= 500;
         const scaleX = naturalWidth / displayWidth;
-        const scaleY = isSmallScreen ? (naturalHeight / displayHeight) * 0.5 : naturalHeight / displayHeight;
+        const scaleY = naturalHeight / displayHeight;
 
         // Convert crop coordinates from display pixels to natural image pixels
         const cropX = cropToUse.x * scaleX;
