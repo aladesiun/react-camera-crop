@@ -274,8 +274,8 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
         const cropWidth = cropToUse.width * scaleX;
         const cropHeight = cropToUse.height * scaleY;
 
-        // Force Y dimension to 500px, centered on the original crop
-        const targetYHeight = 500;
+        // Force Y dimension to 600px, centered on the original crop
+        const targetYHeight = 600;
         const originalCropCenterY = cropY + (cropHeight / 2);
         const newCropY = originalCropCenterY - (targetYHeight / 2);
         const newCropHeight = targetYHeight;
